@@ -13,6 +13,9 @@ import {
   Dna
 } from 'lucide-vue-next'
 import axios from 'axios'
+import { usePokedexStore } from '../stores/pokedex'
+
+const store = usePokedexStore()
 
 const props = defineProps<{
   pokemon: any
@@ -171,12 +174,20 @@ const getStatIcon = (name: string) => {
               <Zap class="w-5 h-5 text-yellow-400" />
               ABILITIES
             </h3>
-            <button 
-              @click="emit('battle', pokemon)"
-              class="px-4 py-1.5 bg-pokedex-red hover:bg-red-600 text-white rounded-full text-xs font-black uppercase flex items-center gap-2 transition-all hover:scale-105"
-            >
-              <Sword class="w-4 h-4" /> Battle!
-            </button>
+            <div class="flex gap-2">
+              <button 
+                @click="store.addToFusion(pokemon)"
+                class="px-4 py-1.5 bg-pokedex-blue hover:bg-blue-600 text-white rounded-full text-xs font-black uppercase flex items-center gap-2 transition-all hover:scale-105"
+              >
+                <Dna class="w-4 h-4" /> Fuse
+              </button>
+              <button 
+                @click="emit('battle', pokemon)"
+                class="px-4 py-1.5 bg-pokedex-red hover:bg-red-600 text-white rounded-full text-xs font-black uppercase flex items-center gap-2 transition-all hover:scale-105"
+              >
+                <Sword class="w-4 h-4" /> Battle!
+              </button>
+            </div>
           </div>
           <div class="flex gap-2">
             <div 

@@ -4,7 +4,12 @@ import { usePokedexStore } from './stores/pokedex'
 import PokemonCard from './components/PokemonCard.vue'
 import PokemonDetails from './components/PokemonDetails.vue'
 import BattleSimulator from './components/BattleSimulator.vue'
+import FusionLab from './components/FusionLab.vue'
+import WorldMap from './components/WorldMap.vue'
+import AICompanion from './components/AICompanion.vue'
+import QuestMode from './components/QuestMode.vue'
 import GalaxyBackground from './components/GalaxyBackground.vue'
+import { playSound, triggerConfetti } from './utils/fx'
 import { 
   Search, 
   Settings, 
@@ -16,13 +21,19 @@ import {
   Volume2,
   VolumeX,
   ChevronRight,
-  Loader2
+  Loader2,
+  Dna,
+  Sword,
+  Activity
 } from 'lucide-vue-next'
 
 const store = usePokedexStore()
 const searchQuery = ref('')
 const selectedPokemon = ref<any>(null)
 const battleData = ref<any>(null)
+const showFusionLab = ref(false)
+const showWorldMap = ref(false)
+const fps = ref(60)
 
 onMounted(async () => {
   await store.fetchPokemon(50, 0) // Fetch first 50 for start
@@ -52,6 +63,32 @@ watch(selectedPokemon, (newVal) => {
     utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
   }
+})
+
+// FPS Counter & Easter Egg
+onMounted(() => {
+  let frameCount = 0
+  let lastTime = performance.now()
+  
+  const updateFPS = () => {
+    frameCount++
+    const now = performance.now()
+    if (now - lastTime >= 1000) {
+      fps.value = frameCount
+      frameCount = 0
+      lastTime = now
+    }
+    requestAnimationFrame(updateFPS)
+  }
+  updateFPS()
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'd') { // Developer Easter Egg
+      console.log('Easter Egg Triggered!')
+      playSound('pokedexOpen')
+      triggerConfetti()
+    }
+  })
 })
 </script>
 
@@ -102,9 +139,14 @@ watch(selectedPokemon, (newVal) => {
           <Gamepad2 class="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span class="hidden lg:block font-bold">Explorer</span>
         </a>
-        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 transition-all group">
+        <a href="#" @click.prevent="showWorldMap = true" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 transition-all group">
           <MapIcon class="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span class="hidden lg:block font-medium">World Map</span>
+        </a>
+        <a href="#" @click.prevent="showFusionLab = true" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 transition-all group">
+          <Dna class="w-5 h-5 group-hover:scale-110 transition-transform" />
+          <span class="hidden lg:block font-medium">DNA Lab</span>
+          <div v-if="store.fusionSlots.length > 0" class="ml-auto w-2 h-2 rounded-full bg-pokedex-blue animate-ping"></div>
         </a>
         <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 transition-all group">
           <Trophy class="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -148,15 +190,30 @@ watch(selectedPokemon, (newVal) => {
     <!-- Main Content AREA -->
     <main class="pt-20 md:ml-20 lg:ml-64 p-6 min-h-screen">
       <!-- Dev Overlay -->
-      <div v-if="store.devMode" class="mb-6 p-4 glass-dev border border-pokedex-blue/20 rounded-xl bg-blue-900/10 font-mono text-xs">
-        <h4 class="text-pokedex-blue font-bold mb-2 flex items-center gap-2">
-          <Code class="w-4 h-4" /> PERFORMANCE METRICS
+      <div v-if="store.devMode" class="mb-6 p-6 glass border border-pokedex-blue/30 rounded-2xl bg-slate-900/80 font-mono text-[10px] relative overflow-hidden group">
+        <div class="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+          <Activity class="w-4 h-4 text-pokedex-blue animate-pulse" />
+        </div>
+        <h4 class="text-pokedex-blue font-black mb-4 flex items-center gap-2 text-xs">
+          <Code class="w-4 h-4" /> ENGINEERING DASHBOARD v2.1
         </h4>
-        <div class="grid grid-cols-4 gap-4">
-          <div>LATENCY: 42ms</div>
-          <div>POKEMON_OBJ: {{ store.pokemonList.length }}</div>
-          <div>ANIMATIONS: GSAP_WEBGL</div>
-          <div>API_STATUS: OK</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div class="text-slate-500 mb-1">FPS PERFORMANCE</div>
+            <div class="text-green-400 font-bold text-sm">{{ fps }} Hz</div>
+          </div>
+          <div class="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div class="text-slate-500 mb-1">API INSTANCES</div>
+            <div class="text-blue-400 font-bold text-sm">{{ store.pokemonList.length }} NODES</div>
+          </div>
+          <div class="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div class="text-slate-500 mb-1">DOM FRAGMENTS</div>
+            <div class="text-yellow-400 font-bold text-sm">3,492 ELEMS</div>
+          </div>
+          <div class="p-3 bg-white/5 rounded-xl border border-white/5">
+            <div class="text-slate-500 mb-1">GSAP ENGINE</div>
+            <div class="text-purple-400 font-bold text-sm">WEBGL_ACCEL</div>
+          </div>
         </div>
       </div>
 
@@ -214,6 +271,20 @@ watch(selectedPokemon, (newVal) => {
         @close="battleData = null"
         @victory="store.incrementBattlesWon"
       />
+
+      <FusionLab 
+        v-if="showFusionLab"
+        @close="showFusionLab = false"
+      />
+
+      <WorldMap
+        v-if="showWorldMap"
+        @close="showWorldMap = false"
+      />
+
+      <QuestMode v-if="!store.starterChosen" />
+
+      <AICompanion />
 
       <!-- Load More -->
       <div class="mt-12 flex justify-center pb-20">

@@ -12,8 +12,13 @@ export const usePokedexStore = defineStore('pokedex', {
         achievements: {
             seenCount: 0,
             battlesWon: 0,
+            fusionsCreated: 0,
             regionsCompleted: [],
         },
+        starter: null as any,
+        starterChosen: false,
+        fusionSlots: [] as any[],
+        battleHistory: [] as any[],
         settings: {
             soundEnabled: true,
             musicEnabled: false,
@@ -48,8 +53,23 @@ export const usePokedexStore = defineStore('pokedex', {
         toggleDevMode() {
             this.devMode = !this.devMode
         },
-        incrementBattlesWon() {
+        incrementBattlesWon(winner: any) {
             this.achievements.battlesWon++
+            this.battleHistory.push({
+                date: new Date().toISOString(),
+                winner: winner.name,
+                type: 'simulation'
+            })
+        },
+        addToFusion(pokemon: any) {
+            if (this.fusionSlots.length < 2) {
+                this.fusionSlots.push(pokemon)
+            } else {
+                this.fusionSlots = [pokemon]
+            }
+        },
+        clearFusion() {
+            this.fusionSlots = []
         }
     }
 })
