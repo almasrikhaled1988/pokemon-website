@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pokedex-red: #e3350d;
+  --color-pokedex-dark-red: #8b0000;
+  --color-pokedex-blue: #00a8ff;
+  --color-pokedex-screen: #a8dadc;
+  --color-pokedex-glass: rgba(255, 255, 255, 0.1);
+}
+
+:root {
+  font-family: 'Outfit', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #0f172a;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+}
+
+#app {
+  width: 100%;
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(227, 53, 13, 0.5);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(0, 168, 255, 0.5);
+  }
+
+  .pokedex-texture {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+@keyframes scan {
+  from { top: -100%; }
+  to { top: 100%; }
+}
+
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 168, 255, 0.5);
+  animation: scan 4s linear infinite;
+  z-index: 10;
+}
