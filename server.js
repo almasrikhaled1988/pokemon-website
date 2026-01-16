@@ -92,7 +92,7 @@ app.post('/api/generate-image', async (req, res) => {
 
         const cleanPrompt = finalDescription.replace(/["']/g, '');
 
-        // Use Cloudflare Worker for image generation
+        // Use Cloudflare Worker for image generation (using native fetch for consistency with test script)
         console.log('Sending request to Cloudflare Worker...');
         const cfWorkerUrl = process.env.CF_WORKER_URL;
         const cfWorkerToken = process.env.CF_WORKER_TOKEN;
@@ -101,20 +101,40 @@ app.post('/api/generate-image', async (req, res) => {
             throw new Error("Cloudflare Worker credentials missing in .env");
         }
 
-        const imageResponse = await axios.post(cfWorkerUrl, {
-            prompt: cleanPrompt + ", Ken Sugimori style, official pokemon artwork, clean white background, cel shading, vibrant flat colors, 2D vector art, high resolution, nintendo style, sole subject"
-        }, {
+        // Use Cloudflare Worker for image generation (using native fetch for consistency with test script)
+        console.log('Sending request to Cloudflare Worker...');
+        const cfWorkerUrl = process.env.CF_WORKER_URL;
+        const cfWorkerToken = process.env.CF_WORKER_TOKEN;
+
+        if (!cfWorkerUrl || !cfWorkerToken) {
+            throw new Error("Cloudflare Worker credentials missing in .env");
+        }
+
+        const fullPrompt = `${cleanPrompt}, Ken Sugimori style, official pokemon artwork, clean white background, cel shading, vibrant flat colors, 2D vector art, high resolution, nintendo style, sole subject`;
+        console.log('Sending Prompt:', fullPrompt);
+
+        const imageResponse = await fetch(cfWorkerUrl, {
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${cfWorkerToken}`,
                 'Content-Type': 'application/json'
             },
-            responseType: 'arraybuffer' // Important to handle binary image data
+            body: JSON.stringify({
+                prompt: fullPrompt
+            })
         });
+
+        if (!imageResponse.ok) {
+            const errorText = await imageResponse.text();
+            console.error('Cloudflare Worker Error Body:', errorText);
+            throw new Error(`Cloudflare Worker failed with status ${imageResponse.status}: ${errorText}`);
+        }
 
         console.log('Cloudflare Worker responded. Converting to Base64...');
 
-        // Convert binary buffer to base64 string
-        const base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
+        const arrayBuffer = await imageResponse.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Image = buffer.toString('base64');
         const imageUrl = `data:image/png;base64,${base64Image}`;
 
         console.log('Sending Base64 Image to client');
@@ -126,8 +146,14 @@ app.post('/api/generate-image', async (req, res) => {
 
     } catch (error) {
         // Detailed error logging
-        const errorDetails = error.response ? error.response.data : error.message;
-        console.error('IMAGE ERROR:', JSON.stringify(errorDetails, null, 2));
+        let errorMessage = error.message;
+
+        // Handle axios errors if any remain (from gemini call)
+        if (error.response && error.response.data) {
+            errorMessage = JSON.stringify(error.response.data, null, 2);
+        }
+
+        console.error('IMAGE ERROR:', errorMessage);
         res.status(500).json({ error: 'Failed to generate hybrid DNA visualization' });
     }
 });
