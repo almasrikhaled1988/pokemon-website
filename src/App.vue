@@ -56,6 +56,14 @@ const startBattle = (pokemon: any) => {
   battleData.value = { pokemon1: pokemon, pokemon2: opponent }
 }
 
+const handleMapPokemon = async (name: string) => {
+  showWorldMap.value = false
+  const pokemon = await store.fetchPokemonByName(name)
+  if (pokemon) {
+    selectedPokemon.value = pokemon
+  }
+}
+
 watch(selectedPokemon, (newVal) => {
   if (newVal && store.kidMode) {
     const utterance = new SpeechSynthesisUtterance(`${newVal.name}. This is a ${newVal.types.map((t: any) => t.type.name).join(' and ')} type Pokémon.`);
@@ -280,6 +288,7 @@ onMounted(() => {
       <WorldMap
         v-if="showWorldMap"
         @close="showWorldMap = false"
+        @select-pokemon="handleMapPokemon"
       />
 
       <QuestMode v-if="!store.starterChosen" />

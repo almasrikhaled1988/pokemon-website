@@ -47,6 +47,18 @@ export const usePokedexStore = defineStore('pokedex', {
                 this.loading = false
             }
         },
+        async fetchPokemonByName(name: string) {
+            this.loading = true
+            try {
+                const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`)
+                return response.data
+            } catch (error) {
+                console.error('Error fetching single pokemon:', error)
+                return null
+            } finally {
+                this.loading = false
+            }
+        },
         toggleKidMode() {
             this.kidMode = !this.kidMode
         },
