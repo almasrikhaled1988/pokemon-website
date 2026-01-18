@@ -191,7 +191,7 @@ app.post('/api/generate-image', async (req, res) => {
 app.use(express.static(join(__dirname, 'dist')));
 
 // Handle SPA routing: serve index.html for all other routes
-app.get('(.*)', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
