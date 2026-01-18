@@ -65,45 +65,47 @@ const fusePokemon = async () => {
     scale: 2,
     duration: 3,
     ease: 'power4.inOut',
-    onComplete: async () => {
-      console.log('Animation complete, sending image request...');
-      fusionProgress.value = 40
-      triggerFlash()
-      triggerConfetti()
-      
-      try {
-        const imageRes = await axios.post('/api/generate-image', {
-          p1: p1.name,
-          p2: p2.name,
-          fusionName: fusionName
-        })
-        console.log('Image generation response received:', imageRes.data);
-
-        const newPokemon = {
-          name: fusionName,
-          id: 'FUSION-' + p1.id + '-' + p2.id,
-          types: [...new Set([...p1.types.map((t: any) => t.type.name), ...p2.types.map((t: any) => t.type.name)])].slice(0, 2),
-          image: imageRes.data.imageUrl,
-          stats: p1.stats.map((s: any, i: number) => ({
-            base_stat: Math.floor((s.base_stat + p2.stats[i].base_stat) / 2) + 20,
-            stat: s.stat
-          })),
-          isFusion: true
-        }
+    onComplete: () => {
+      (async () => {
+        console.log('Animation complete, sending image request...');
+        fusionProgress.value = 40
+        triggerFlash()
+        triggerConfetti()
         
-        fusionProgress.value = 100
-        clearInterval(progressInterval)
-        fusedPokemon.value = newPokemon
-        store.achievements.fusionsCreated++
-        generateLore(p1.name, p2.name, newPokemon.name)
-      } catch (e) {
-        console.error("Fusion Image Error", e)
-        clearInterval(progressInterval)
-        fusionProgress.value = 0
-      } finally {
-        isFusing.value = false
-        isGeneratingImage.value = false
-      }
+        try {
+          const imageRes = await axios.post('/api/generate-image', {
+            p1: p1.name,
+            p2: p2.name,
+            fusionName: fusionName
+          })
+          console.log('Image generation response received:', imageRes.data);
+
+          const newPokemon = {
+            name: fusionName,
+            id: 'FUSION-' + p1.id + '-' + p2.id,
+            types: [...new Set([...p1.types.map((t: any) => t.type.name), ...p2.types.map((t: any) => t.type.name)])].slice(0, 2),
+            image: imageRes.data.imageUrl,
+            stats: p1.stats.map((s: any, i: number) => ({
+              base_stat: Math.floor((s.base_stat + p2.stats[i].base_stat) / 2) + 20,
+              stat: s.stat
+            })),
+            isFusion: true
+          }
+          
+          fusionProgress.value = 100
+          clearInterval(progressInterval)
+          fusedPokemon.value = newPokemon
+          store.achievements.fusionsCreated++
+          generateLore(p1.name, p2.name, newPokemon.name)
+        } catch (e) {
+          console.error("Fusion Image Error", e)
+          clearInterval(progressInterval)
+          fusionProgress.value = 0
+        } finally {
+          isFusing.value = false
+          isGeneratingImage.value = false
+        }
+      })()
     }
   })
 }
