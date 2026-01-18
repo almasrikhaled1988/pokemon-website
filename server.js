@@ -11,13 +11,50 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const MODEL_NAME = 'gemma-3n-e2b-it';
+
+app.post('/api/chat', async (req, res) => {
+    const { text } = req.body;
+    console.log('--- NEW CHAT REQUEST ---');
+    console.log('User:', text);
+
+    if (!text) {
+        return res.status(400).json({ error: 'Text prompt is required' });
+    }
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+
+        // Chat needs a softer, more conversational persona
+        const response = await axios.post(url, {
+            contents: [{
+                parts: [{ text: "You are an AI Poke-Guide (AI Companion). Be helpful, friendly, and enthusiastic like a Pokemon professor assistant. Answer the user's question directly.\n\nUser: " + text }]
+            }],
+            generationConfig: {
+                temperature: 0.9,
+                maxOutputTokens: 500
+            }
+        });
+
+        const aiText = response.data.candidates?.[0]?.content?.parts?.find(p => p.text)?.text;
+
+        if (!aiText) {
+            return res.json({ output: "Pika... I couldn't think of a response!" });
+        }
+
+        res.json({ output: aiText });
+
+    } catch (error) {
+        console.error('CHAT ERROR:', JSON.stringify(error.response?.data || error.message, null, 2));
+        res.status(500).json({ error: 'Failed to communicate with Poké-Brain' });
+    }
+});
 
 app.post('/api/generate', async (req, res) => {
     const { text } = req.body;
@@ -101,17 +138,11 @@ app.post('/api/generate-image', async (req, res) => {
             throw new Error("Cloudflare Worker credentials missing in .env");
         }
 
-        // Use Cloudflare Worker for image generation (using native fetch for consistency with test script)
-        console.log('Sending request to Cloudflare Worker...');
-        const cfWorkerUrl = process.env.CF_WORKER_URL;
-        const cfWorkerToken = process.env.CF_WORKER_TOKEN;
-
-        if (!cfWorkerUrl || !cfWorkerToken) {
-            throw new Error("Cloudflare Worker credentials missing in .env");
-        }
-
         const fullPrompt = `${cleanPrompt}, Ken Sugimori style, official pokemon artwork, clean white background, cel shading, vibrant flat colors, 2D vector art, high resolution, nintendo style, sole subject`;
         console.log('Sending Prompt:', fullPrompt);
+
+        const requestBody = JSON.stringify({ prompt: fullPrompt });
+        console.log('Request Body:', requestBody);
 
         const imageResponse = await fetch(cfWorkerUrl, {
             method: 'POST',
@@ -119,9 +150,7 @@ app.post('/api/generate-image', async (req, res) => {
                 'Authorization': `Bearer ${cfWorkerToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                prompt: fullPrompt
-            })
+            body: requestBody
         });
 
         if (!imageResponse.ok) {
@@ -156,6 +185,14 @@ app.post('/api/generate-image', async (req, res) => {
         console.error('IMAGE ERROR:', errorMessage);
         res.status(500).json({ error: 'Failed to generate hybrid DNA visualization' });
     }
+});
+
+// Serve static files from the 'dist' directory
+app.use(express.static(join(__dirname, 'dist')));
+
+// Handle SPA routing: serve index.html for all other routes
+app.get('*', (req, res) => {
+    res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {

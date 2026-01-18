@@ -30,7 +30,7 @@ const sendMessage = async () => {
 
   try {
     // Call the local backend proxy (securely handles API key)
-    const response = await axios.post('/api/generate', {
+    const response = await axios.post('/api/chat', {
       text: userText
     })
 

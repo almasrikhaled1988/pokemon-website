@@ -24,7 +24,8 @@ import {
   Loader2,
   Dna,
   Sword,
-  Activity
+  Activity,
+  X
 } from 'lucide-vue-next'
 
 const store = usePokedexStore()
@@ -39,11 +40,21 @@ onMounted(async () => {
   await store.fetchPokemon(50, 0) // Fetch first 50 for start
 })
 
+const selectedType = ref<string | null>(null)
+
 const filteredPokemon = computed(() => {
-  return store.pokemonList.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    p.id.toString() === searchQuery.value
-  )
+  return store.pokemonList.filter(p => {
+    // 1. Search Query Filter
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                          p.id.toString() === searchQuery.value
+    
+    // 2. Type Filter (if selected)
+    const matchesType = selectedType.value 
+      ? p.types.some((t: any) => t.type.name.toLowerCase() === selectedType.value?.toLowerCase()) 
+      : true
+
+    return matchesSearch && matchesType
+  })
 })
 
 const toggleSound = () => {
@@ -245,7 +256,22 @@ onMounted(() => {
           {{ store.kidMode ? 'FOUND POKEMON' : 'All Generations' }}
         </h2>
         <div class="flex gap-2 ml-auto">
-          <span v-for="type in ['Fire', 'Water', 'Grass', 'Electric']" :key="type" class="px-4 py-1 rounded-full glass text-xs font-bold hover:bg-pokedex-blue/20 transition-colors cursor-pointer border border-white/10 uppercase tracking-widest">
+          <!-- Clear Filter Button -->
+          <button 
+            v-if="selectedType" 
+            @click="selectedType = null"
+            class="px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/50 hover:bg-red-500/40 transition-colors uppercase tracking-widest flex items-center gap-1"
+          >
+            <X class="w-3 h-3" /> Clear
+          </button>
+
+          <span 
+            v-for="type in ['Fire', 'Water', 'Grass', 'Electric', 'Psychic', 'Dragon']" 
+            :key="type" 
+            @click="selectedType = selectedType === type ? null : type"
+            class="px-4 py-1 rounded-full glass text-xs font-bold max-sm:px-2 max-sm:text-[10px] transition-all cursor-pointer border border-white/10 uppercase tracking-widest hover:scale-105 active:scale-95 select-none"
+            :class="selectedType === type ? 'bg-pokedex-blue text-white border-pokedex-blue shadow-[0_0_15px_rgba(0,168,255,0.5)]' : 'hover:bg-pokedex-blue/20 text-slate-400'"
+          >
             {{ type }}
           </span>
         </div>
@@ -310,14 +336,14 @@ onMounted(() => {
       </div>
 
       <!-- Pokedex Device UI (Bottom Floating) -->
-      <div class="fixed bottom-6 right-6 z-50">
+      <!-- <div class="fixed bottom-6 right-6 z-50">
         <button class="w-20 h-20 rounded-full bg-pokedex-red border-8 border-[#333] shadow-2xl flex items-center justify-center group hover:scale-110 hover:rotate-12 transition-all">
           <div class="w-10 h-10 bg-pokedex-blue rounded-full border-4 border-white glow-blue"></div>
           <div class="absolute -top-12 right-0 bg-white text-black px-4 py-1 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
             OPEN POKÉDEX
           </div>
         </button>
-      </div>
+      </div> -->
     </main>
 
     <!-- Footer Mobile -->

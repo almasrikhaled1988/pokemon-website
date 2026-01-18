@@ -63,6 +63,13 @@ const attack = async () => {
     emit('victory', attacker)
   } else {
     turn.value = turn.value === 1 ? 2 : 1
+    
+    // AI Turn: If it's Player 2's turn, attack back automatically
+    if (turn.value === 2) {
+      setTimeout(() => {
+        attack()
+      }, 1000)
+    }
   }
   
   isAttacking.value = false
