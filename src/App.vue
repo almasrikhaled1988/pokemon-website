@@ -7,7 +7,7 @@ import BattleSimulator from './components/BattleSimulator.vue'
 import FusionLab from './components/FusionLab.vue'
 import WorldMap from './components/WorldMap.vue'
 import AICompanion from './components/AICompanion.vue'
-import QuestMode from './components/QuestMode.vue'
+
 import GalaxyBackground from './components/GalaxyBackground.vue'
 import { playSound, triggerConfetti } from './utils/fx'
 import { 
@@ -317,7 +317,7 @@ onMounted(() => {
         @select-pokemon="handleMapPokemon"
       />
 
-      <QuestMode v-if="!store.starterChosen" />
+
 
       <AICompanion />
 
